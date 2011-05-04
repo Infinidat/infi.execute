@@ -1,5 +1,6 @@
 from .exceptions import CommandTimeout
 from .exceptions import ExecutionError
+from .ioloop import IOLoop
 from cStringIO import StringIO
 import itertools
 import os
@@ -32,33 +33,46 @@ class ExecuteResult(object):
     def kill(self, sig=signal.SIGKILL):
         if not self.finished:
             os.kill(self.pid, sig)
-    def _burst(self, stdoutReadable, stderrReadable, stdinWritable):
-        if stdoutReadable:
-            output = self._popen.stdout.read()
-            if not output:
-                self._popen.stdout.close()
-                self._popen.stdout = None
-            else:
-                self._output.write(output)
-        if stderrReadable:
-            output = self._popen.stderr.read()
-            if not output:
-                self._popen.stderr.close()
-                self._popen.stderr = None
-            else:
-                self._error.write(output)
-        if stdinWritable:
-            input = self._input.read(MAX_INPUT_CHUNK_SIZE)
-            if input:
-                self._popen.stdin.write(input)
-            if len(input) <  MAX_INPUT_CHUNK_SIZE:
-                self._popen.stdin.close()
-                self._popen.stdin = None
+
+    def register_to_ioloop(self, ioloop):
+        if self._popen.stdout is not None:
+            self._register_stdout(ioloop)
+        if self._popen.stderr is not None:
+            self._register_stderr(ioloop)
+        if self._popen.stdin is not None:
+            self._register_stdin(ioloop)
+    def _register_stdin(self, ioloop):
+        ioloop.register_write(self._popen.stdin, self._handle_stdin)
+    def _register_stdout(self, ioloop):
+        ioloop.register_read(self._popen.stdout, self._handle_stdout)
+    def _register_stderr(self, ioloop):
+        ioloop.register_read(self._popen.stderr, self._handle_stderr)
+    def _handle_stdout(self, ioloop, _):
+        output = self._popen.stdout.read()
+        if not output:
+            self._popen.stdout.close()
+            self._popen.stdout = None
+        else:
+            self._output.write(output)
+            self._register_stdout(ioloop)
+    def _handle_stdin(self, ioloop, _):
+        input = self._input.read(MAX_INPUT_CHUNK_SIZE)
+        if input:
+            self._popen.stdin.write(input)
+        if len(input) <  MAX_INPUT_CHUNK_SIZE:
+            self._popen.stdin.close()
+            self._popen.stdin = None
+        else:
+            self._register_stdin(ioloop)
+    def _handle_stderr(self, ioloop, _):
+        output = self._popen.stderr.read()
+        if not output:
+            self._popen.stderr.close()
+            self._popen.stderr = None
+        else:
+            self._error.write(output)
+            self._register_stderr(ioloop)
     def poll(self):
-        # the following calls _check_return_code
-        _poll_and_wait_for_io([self], timeout=0)
-        return self.result
-    def poll_without_checking_io(self):
         self._popen.poll()
         self._check_return_code()
         return self.result
@@ -88,13 +102,16 @@ class ExecuteResult(object):
         return self._error.getvalue()
 
 def wait_for_many_results(results, **kwargs):
+    ioloop = IOLoop()
     results = list(results)
+    for result in results:
+        result.register_to_ioloop(ioloop)
     timeout = kwargs.pop('timeout', None)
     deadline = _get_deadline(results, timeout)
     returned = [None for result in results]
     while _should_still_wait(results, deadline=deadline):
         current_time = time.time()
-        _poll_and_wait_for_io(results, timeout=_get_wait_interval(current_time, deadline))
+        ioloop.do_iteration(_get_wait_interval(current_time, deadline))
         _sweep_finished_results(results, returned)
     _sweep_finished_results(results, returned)
     return returned
@@ -119,7 +136,7 @@ def _sweep_finished_results(results, returned):
     for index, result in enumerate(results):
         if result is None:
             continue
-        result.poll_without_checking_io()
+        result.poll()
         if result.is_finished():
             returned[index] = result
             results[index] = None
@@ -131,27 +148,3 @@ def _should_still_wait(results, deadline):
     if deadline is not None and deadline < time.time():
         return False
     return True
-
-def _poll_and_wait_for_io(results, timeout=0):
-    read_fds = []
-    write_fds = []
-    for result in results:
-        if result is None:
-            continue
-        if result._popen.stdin is not None:
-            write_fds.append(result._popen.stdin)
-        if result._popen.stdout is not None:
-            read_fds.append(result._popen.stdout)
-        if result._popen.stderr is not None:
-            read_fds.append(result._popen.stderr)
-    #print "selecting, r=%s, w=%s, timeout=%s" % (read_fds, write_fds, timeout)
-    readables = writables = []
-    if read_fds or write_fds:
-        readables, writables, _ = select.select(read_fds, write_fds, [], timeout)
-    for result in results:
-        if result is None:
-            continue
-        result._burst(stdoutReadable=result._popen.stdout in readables,
-                      stderrReadable=result._popen.stderr in readables,
-                      stdinWritable=result._popen.stdin in writables)
-        result.poll_without_checking_io()
