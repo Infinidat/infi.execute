@@ -1,8 +1,7 @@
+from .waiting import wait_for_many_results
 from .exceptions import CommandTimeout
 from .exceptions import ExecutionError
-from .ioloop import IOLoop
 from cStringIO import StringIO
-import itertools
 import os
 import select
 import signal
@@ -10,9 +9,9 @@ import time
 
 MAX_INPUT_CHUNK_SIZE = 1024
 
-class ExecuteResult(object):
-    def __init__(self, command, popen, stdin=None, assert_success=False, timeout=None):
-        super(ExecuteResult, self).__init__()
+class Result(object):
+    def __init__(self, command, popen, stdin, assert_success, timeout):
+        super(Result, self).__init__()
         self._command = command
         self._popen = popen
         self._output = StringIO()
@@ -24,15 +23,11 @@ class ExecuteResult(object):
             self._deadline = time.time() + timeout
     def get_deadline(self):
         return self._deadline
-    @property
-    def result(self):
+    def get_returncode(self):
         return self._popen.returncode
-    @property
-    def finished(self):
-        return self.result is not None
     def kill(self, sig=signal.SIGKILL):
-        if not self.finished:
-            os.kill(self.pid, sig)
+        if not self.is_finished():
+            os.kill(self.get_pid(), sig)
 
     def register_to_ioloop(self, ioloop):
         if self._popen.stdout is not None:
@@ -75,9 +70,10 @@ class ExecuteResult(object):
     def poll(self):
         self._popen.poll()
         self._check_return_code()
-        return self.result
+        return self.get_returncode()
     def _check_return_code(self):
-        if self._assert_success and self.result is not None and self.result != 0:
+        returncode = self.get_returncode()
+        if self._assert_success and returncode is not None and returncode != 0:
             raise ExecutionError(self)
     def wait(self, timeout=None):
         returned_results = wait_for_many_results([self], timeout=timeout)
@@ -86,65 +82,13 @@ class ExecuteResult(object):
             raise CommandTimeout(self)
         return returned
     def is_finished(self):
-        return self.result is not None
-    def __int__(self):
-        return self.result
+        return self.get_returncode() is not None
     def __repr__(self):
-        return "<pid %s: %s>" % (self.pid, self._command)
-    @property
-    def pid(self):
+        return "<pid %s: %s>" % (self.get_pid(), self._command)
+    def get_pid(self):
         return self._popen.pid
-    @property
-    def stdout(self):
+    def get_stdout(self):
         return self._output.getvalue()
-    @property
-    def stderr(self):
+    def get_stderr(self):
         return self._error.getvalue()
 
-def wait_for_many_results(results, **kwargs):
-    ioloop = IOLoop()
-    results = list(results)
-    for result in results:
-        result.register_to_ioloop(ioloop)
-    timeout = kwargs.pop('timeout', None)
-    deadline = _get_deadline(results, timeout)
-    returned = [None for result in results]
-    while _should_still_wait(results, deadline=deadline):
-        current_time = time.time()
-        ioloop.do_iteration(_get_wait_interval(current_time, deadline))
-        _sweep_finished_results(results, returned)
-    _sweep_finished_results(results, returned)
-    return returned
-
-DEFAULT_SAMPLE_INTERVAL = 0.05
-
-def _get_deadline(results, deadline):
-    returned = None
-    for d in itertools.chain([deadline], (result.get_deadline() for result in results)):
-        if d is None:
-            continue
-        if returned is None or d < returned:
-            returned = d
-    return returned
-
-def _get_wait_interval(current_time, deadline):
-    if deadline is None:
-        return DEFAULT_SAMPLE_INTERVAL
-    return max(0, min(DEFAULT_SAMPLE_INTERVAL, (deadline - current_time)))
-
-def _sweep_finished_results(results, returned):
-    for index, result in enumerate(results):
-        if result is None:
-            continue
-        result.poll()
-        if result.is_finished():
-            returned[index] = result
-            results[index] = None
-
-def _should_still_wait(results, deadline):
-    if all(r is None for r in results):
-        return False
-    current_time = time.time()
-    if deadline is not None and deadline < time.time():
-        return False
-    return True

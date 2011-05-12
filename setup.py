@@ -34,6 +34,6 @@ setup(name="infi.execute",
       #url="your.url.here",
       version=VERSION,
       packages=list(_find_all_subpackages("infi")),
-      install_requires=[],
+      install_requires=["pyforge"],
       scripts=[],
       )
