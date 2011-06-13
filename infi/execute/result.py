@@ -25,7 +25,7 @@ class Result(object):
         return self._deadline
     def get_returncode(self):
         return self._popen.returncode
-    def kill(self, sig=signal.SIGKILL):
+    def kill(self, sig=signal.SIGTERM):
         if not self.is_finished():
             os.kill(self.get_pid(), sig)
 
@@ -42,8 +42,12 @@ class Result(object):
         ioloop.register_read(self._popen.stdout, self._handle_stdout)
     def _register_stderr(self, ioloop):
         ioloop.register_read(self._popen.stderr, self._handle_stderr)
-    def _handle_stdout(self, ioloop, _):
-        output = self._popen.stdout.read()
+    def _handle_stdout(self, ioloop, _, **kwargs):
+        """ because anonymous pipes in windows can be blocked, we need to pay attention
+        on how much we read
+        """
+        count = kwargs.get('count', -1)
+        output = self._popen.stdout.read(count)
         if not output:
             self._popen.stdout.close()
             self._popen.stdout = None
@@ -59,8 +63,12 @@ class Result(object):
             self._popen.stdin = None
         else:
             self._register_stdin(ioloop)
-    def _handle_stderr(self, ioloop, _):
-        output = self._popen.stderr.read()
+    def _handle_stderr(self, ioloop, _, **kwargs):
+        """ because anonymous pipes in windows can be blocked, we need to pay attention
+        on how much we read
+        """
+        count = kwargs.get('count', -1)
+        output = self._popen.stderr.read(count)
         if not output:
             self._popen.stderr.close()
             self._popen.stderr = None

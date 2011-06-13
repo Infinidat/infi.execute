@@ -2,24 +2,31 @@ import time
 import itertools
 from .ioloop import IOLoop
 
+DEFAULT_SAMPLE_INTERVAL = 0.05
+
 def wait_for_many_results(results, **kwargs):
     ioloop = IOLoop()
     results = list(results)
     for result in results:
         result.register_to_ioloop(ioloop)
     timeout = kwargs.pop('timeout', None)
+    # timeout argument is number of seconds, and we need point in time
+    timeout = time.time() + timeout if timeout else None
     deadline = _get_deadline(results, timeout)
     returned = [None for result in results]
     while _should_still_wait(results, deadline=deadline):
         current_time = time.time()
         ioloop.do_iteration(_get_wait_interval(current_time, deadline))
         _sweep_finished_results(results, returned)
+    # there might be some output left
+    # a) if the subprocess ended really quick, and we did not enter the loop
+    # b) some output is left since the last iteration in the loop
+    ioloop.do_iteration(DEFAULT_SAMPLE_INTERVAL)
     _sweep_finished_results(results, returned)
     return returned
 
-DEFAULT_SAMPLE_INTERVAL = 0.05
-
 def _get_deadline(results, deadline):
+    """ returns the earliest deadline point in time """
     returned = None
     for d in itertools.chain([deadline], (result.get_deadline() for result in results)):
         if d is None:
