@@ -1,9 +1,9 @@
-
 import os
 import itertools
 from setuptools import setup, find_packages
 
-from infi.execute import __version__ as VERSION
+with open(os.path.join(os.path.dirname(__file__), "infi", "execute", "__version__.py")) as version_file:
+    exec version_file.read()
 
 setup(name="infi.execute",
       classifiers = [
@@ -17,7 +17,7 @@ setup(name="infi.execute",
       author="Rotem Yaari",
       author_email="",
       #url="your.url.here",
-      version=VERSION,
+      version=__version__,
       packages=find_packages(exclude=["tests"]),
       namespace_packages=["infi"],
       install_requires=["pyforge"],

@@ -1,4 +1,4 @@
-__version__ = "0.0.1"
+from .__version__ import __version__
 from .runner import local, through_ssh
 execute = local.execute
 execute_async = local.execute_async
