@@ -1,6 +1,7 @@
 from .waiting import wait_for_many_results
 from .exceptions import CommandTimeout
 from .exceptions import ExecutionError
+from .utils import make_fd_non_blocking
 from cStringIO import StringIO
 import os
 import select
@@ -28,6 +29,8 @@ class Result(object):
     def kill(self, sig=signal.SIGTERM):
         if not self.is_finished():
             os.kill(self.get_pid(), sig)
+    make_fd_non_blocking(self._popen.stdout.fileno())
+    make_fd_non_blocking(self._popen.stderr.fileno())
 
     def register_to_ioloop(self, ioloop):
         if self._popen.stdout is not None:

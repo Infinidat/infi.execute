@@ -84,7 +84,6 @@ class SimpleExecution(TestCase):
         with self.assertTakesAlmost(num_secs, 1):
             with self.assertImmediate():
                 result = execute_async(command)
-                make_fd_non_blocking(result._popen.stdout.fileno())
             with self.assertTakesAlmost(1):
                 self.assertRaises(CommandTimeout, result.wait, **{'timeout':1})
                 self.assertIn(part_a, result.get_stdout())
