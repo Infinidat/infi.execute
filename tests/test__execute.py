@@ -73,7 +73,7 @@ class SimpleExecution(TestCase):
         self.assertTrue(all(results))
         self.assertEquals(len(results), len(commands))
         self.assertEquals(set(result.get_returncode() for result in results), set([0]))
-    def test__async_execute_with_output(self):
+    def test__async_execute_with_little_output(self):
         part_a = 'legen'
         part_b = 'wait for it'
         part_c = 'dary'
@@ -99,6 +99,48 @@ class SimpleExecution(TestCase):
                 self.assertIn(part_b, result.get_stdout())
                 self.assertIn(part_c, result.get_stdout())
             result.wait()
+    def test__async_execute_with_huge_output(self):
+        part_a = 'legen'
+        part_b = 'wait for it'
+        part_c = 'dary'
+        number = 65536
+        command = ["-c", "from sys import stdout; from time import sleep; stdout.write('%s'*%s);stdout.flush(); sleep(2); stdout.write('%s'*%s);stdout.flush(); sleep(2); stdout.write('%s'*%s); stdout.flush(); sleep(2)" % \
+                        (part_a, number, part_b, number, part_c, number)]
+        command.insert(0,sys.executable)
+        num_secs = 6
+        with self.assertTakesAlmost(num_secs, 1):
+            with self.assertImmediate():
+                result = execute_async(command)
+            with self.assertTakesAlmost(1):
+                self.assertRaises(CommandTimeout, result.wait, **{'timeout':1})
+                self.assertIn(part_a * number, result.get_stdout())
+                #self.assertNotIn(part_b * number, result.get_stdout())
+            with self.assertTakesAlmost(2):
+                self.assertRaises(CommandTimeout, result.wait, **{'timeout':2})
+                self.assertIn(part_a * number, result.get_stdout())
+                self.assertIn(part_b * number, result.get_stdout())
+                self.assertNotIn(part_c, result.get_stdout())
+            with self.assertTakesAlmost(2):
+                self.assertRaises(CommandTimeout, result.wait, **{'timeout':2})
+                self.assertIn(part_a * number, result.get_stdout())
+                self.assertIn(part_b * number, result.get_stdout())
+                self.assertIn(part_c * number, result.get_stdout())
+            result.wait()
+    def test__sync_execute_with_huge_output(self):
+        part_a = 'legen'
+        part_b = 'wait for it'
+        part_c = 'dary'
+        number = 65536
+        command = ["-c", "from sys import stdout; from time import sleep; stdout.write('%s'*%s);stdout.flush(); sleep(2); stdout.write('%s'*%s);stdout.flush(); sleep(2); stdout.write('%s'*%s); stdout.flush(); sleep(2)" % \
+                        (part_a, number, part_b, number, part_c, number)]
+        command.insert(0,sys.executable)
+        num_secs = 6
+        with self.assertTakesAlmost(num_secs, 1):
+            result = execute(command)
+            self.assertIn(part_a * number, result.get_stdout())
+            self.assertIn(part_b * number, result.get_stdout())
+            self.assertIn(part_c * number, result.get_stdout())
+ 
     def test__async_wait_periods(self):
         num_secs = 3
         with self.assertTakesAlmost(num_secs):
