@@ -7,7 +7,6 @@ import os
 import select
 import signal
 import time
-import logging
 
 MAX_INPUT_CHUNK_SIZE = 1024
 
@@ -51,9 +50,7 @@ class Result(object):
         on how much we read
         """
         count = kwargs.get('count', -1)
-        logging.debug("before read %s", time.time())
         output = self._popen.stdout.read(count)
-        logging.debug("after read %s", time.time())
         if not output:
             self._popen.stdout.close()
             self._popen.stdout = None

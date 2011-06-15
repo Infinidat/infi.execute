@@ -3,9 +3,7 @@ from select import select as select_unix
 from .utils import _get_named_pipe_from_fileno
 from time import time, sleep
 
-import logging
-
-def select_windows(rlist, wlist, xlist, timeout):
+def select_windows(rlist, wlist, xlist, timeout, retry=True):
     """ on Windows, select() works only of sockets
     work of anonymous pipes is done as follows:
         PeekNamedPipe returns the amount of data avaialble.
@@ -15,28 +13,28 @@ def select_windows(rlist, wlist, xlist, timeout):
     but a list of tuples: (fd, bytes_available,)
 
     since IOLoop.do_iterations calls select with xlist=[], I do not iterate over xlist at all
+
+    since PeekNamedPipe does not have a timeout, we will try run two iterations
+    over all the fds in rlist
     """
     from ctypes import windll, byref, c_ulong, c_void_p, WinError, GetLastError
-    logging.debug("select_windows start %s", time())
     PIPE_ENDED = 109
     read_ready = []
+    rlist = [item for item in rlist]
     for i in range(2):
         for fd in rlist:
             bytes_available = c_ulong(0)
             handle = _get_named_pipe_from_fileno(fd.fileno())
-            logging.debug("before peek %s", time())
             result = windll.kernel32.PeekNamedPipe(c_void_p(handle), 0, c_ulong(0), 0, byref(bytes_available), 0)
-            logging.debug("after peek %s", time())
             if not result:
                 last_error = GetLastError()
                 if last_error != PIPE_ENDED:
                     raise WinError(last_error)
                 continue
             if bytes_available.value:
-                logging.debug("jackpot %s", bytes_available.value)
                 read_ready.append((fd, bytes_available.value, ))
+                rlist.remove(fd)
         sleep(timeout)
-    logging.debug("select_windows end %s", time())
     return read_ready, wlist, xlist
 
 def select(rlist, wlist, xlist, timeout):
