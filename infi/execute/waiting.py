@@ -1,5 +1,4 @@
 import time
-import itertools
 from .ioloop import IOLoop
 
 DEFAULT_SAMPLE_INTERVAL = 0.05
@@ -10,30 +9,29 @@ def wait_for_many_results(results, **kwargs):
     for result in results:
         result.register_to_ioloop(ioloop)
     timeout = kwargs.pop('timeout', None)
-    # timeout argument is number of seconds, and we need point in time
-    timeout = time.time() + timeout if timeout else None
     deadline = _get_deadline(results, timeout)
     returned = [None for result in results]
-    while _should_still_wait(results, deadline=deadline):
+
+    # Note that the _should_still_wait predicate might return False if
+    # things happen real quickly
+    while True:
         current_time = time.time()
         ioloop.do_iteration(_get_wait_interval(current_time, deadline))
         _sweep_finished_results(results, returned)
-    # there might be some output left
-    # a) if the subprocess ended really quick, and we did not enter the loop
-    # b) some output is left since the last iteration in the loop
-    ioloop.do_iteration(DEFAULT_SAMPLE_INTERVAL)
+        if not _should_still_wait(results, deadline=deadline):
+            break
     _sweep_finished_results(results, returned)
     return returned
 
-def _get_deadline(results, deadline):
+def _get_deadline(results, timeout=None):
     """ returns the earliest deadline point in time """
-    returned = None
-    for d in itertools.chain([deadline], (result.get_deadline() for result in results)):
-        if d is None:
-            continue
-        if returned is None or d < returned:
-            returned = d
-    return returned
+    start_time = time.time()
+
+    all_deadlines = set(result.get_deadline() for result in results)
+    all_deadlines.discard(None)
+    if timeout is not None:
+        all_deadlines.add(start_time + timeout)
+    return min(all_deadlines) if all_deadlines else None
 
 def _get_wait_interval(current_time, deadline):
     if deadline is None:
