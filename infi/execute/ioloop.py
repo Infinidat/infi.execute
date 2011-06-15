@@ -17,17 +17,18 @@ def select_windows(rlist, wlist, xlist, timeout):
     from ctypes import windll, byref, c_ulong, c_void_p, WinError, GetLastError
     PIPE_ENDED = 109
     read_ready = []
-    for fd in rlist:
-        bytes_available = c_ulong(0)
-        handle = _get_named_pipe_from_fileno(fd.fileno())
-        result = windll.kernel32.PeekNamedPipe(c_void_p(handle), 0, c_ulong(0), 0, byref(bytes_available), 0)
-        if not result:
-            last_error = GetLastError()
-            if last_error != PIPE_ENDED:
-                raise WinError(last_error)
-            continue
-        if bytes_available.value:
-            read_ready.append((fd, bytes_available.value, ))
+    for i in range(2):
+        for fd in rlist:
+            bytes_available = c_ulong(0)
+            handle = _get_named_pipe_from_fileno(fd.fileno())
+            result = windll.kernel32.PeekNamedPipe(c_void_p(handle), 0, c_ulong(0), 0, byref(bytes_available), 0)
+            if not result:
+                last_error = GetLastError()
+                if last_error != PIPE_ENDED:
+                    raise WinError(last_error)
+                continue
+            if bytes_available.value:
+                read_ready.append((fd, bytes_available.value, ))
         sleep(timeout)
     return read_ready, wlist, xlist
 
