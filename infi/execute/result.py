@@ -22,6 +22,8 @@ class Result(object):
         self._deadline = None
         if timeout is not None:
             self._deadline = time.time() + timeout
+        make_fd_non_blocking(self._popen.stdout.fileno())
+        make_fd_non_blocking(self._popen.stderr.fileno())
     def get_deadline(self):
         return self._deadline
     def get_returncode(self):
@@ -29,8 +31,6 @@ class Result(object):
     def kill(self, sig=signal.SIGTERM):
         if not self.is_finished():
             os.kill(self.get_pid(), sig)
-    make_fd_non_blocking(self._popen.stdout.fileno())
-    make_fd_non_blocking(self._popen.stderr.fileno())
 
     def register_to_ioloop(self, ioloop):
         if self._popen.stdout is not None:
