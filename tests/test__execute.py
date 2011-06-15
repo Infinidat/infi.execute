@@ -55,7 +55,7 @@ class SimpleExecution(TestCase):
         self.assertEquals(result.get_stdout(), "hello")
     def test__async_execute(self):
         num_secs = 3
-        with self.assertTakesAlmost(num_secs):
+        with self.assertTakesAlmost(num_secs, 1):
             with self.assertImmediate():
                 result = execute_async("sleep {}".format(num_secs), shell=True)
             self.assertIsNone(result.get_returncode())
