@@ -108,23 +108,19 @@ class SimpleExecution(TestCase):
                         (part_a, number, part_b, number, part_c, number)]
         command.insert(0,sys.executable)
         num_secs = 6
-        with self.assertTakesAlmost(num_secs, 1):
-            with self.assertImmediate():
-                result = execute_async(command)
-            with self.assertTakesAlmost(1):
-                self.assertRaises(CommandTimeout, result.wait, **{'timeout':1})
-                self.assertIn(part_a * number, result.get_stdout())
-                #self.assertNotIn(part_b * number, result.get_stdout())
-            with self.assertTakesAlmost(2):
-                self.assertRaises(CommandTimeout, result.wait, **{'timeout':2})
-                self.assertIn(part_a * number, result.get_stdout())
-                self.assertIn(part_b * number, result.get_stdout())
-                self.assertNotIn(part_c, result.get_stdout())
-            with self.assertTakesAlmost(2):
-                self.assertRaises(CommandTimeout, result.wait, **{'timeout':2})
-                self.assertIn(part_a * number, result.get_stdout())
-                self.assertIn(part_b * number, result.get_stdout())
-                self.assertIn(part_c * number, result.get_stdout())
+        with self.assertImmediate():
+            result = execute_async(command)
+            self.assertRaises(CommandTimeout, result.wait, **{'timeout':1})
+            self.assertIn(part_a * number, result.get_stdout())
+            #self.assertNotIn(part_b * number, result.get_stdout())
+            self.assertRaises(CommandTimeout, result.wait, **{'timeout':2})
+            self.assertIn(part_a * number, result.get_stdout())
+            self.assertIn(part_b * number, result.get_stdout())
+            self.assertNotIn(part_c, result.get_stdout())
+            self.assertRaises(CommandTimeout, result.wait, **{'timeout':2})
+            self.assertIn(part_a * number, result.get_stdout())
+            self.assertIn(part_b * number, result.get_stdout())
+            self.assertIn(part_c * number, result.get_stdout())
             result.wait()
     def test__sync_execute_with_huge_output(self):
         part_a = 'legen'
@@ -135,11 +131,10 @@ class SimpleExecution(TestCase):
                         (part_a, number, part_b, number, part_c, number)]
         command.insert(0,sys.executable)
         num_secs = 6
-        with self.assertTakesAlmost(num_secs, 1):
-            result = execute(command)
-            self.assertIn(part_a * number, result.get_stdout())
-            self.assertIn(part_b * number, result.get_stdout())
-            self.assertIn(part_c * number, result.get_stdout())
+        result = execute(command)
+        self.assertIn(part_a * number, result.get_stdout())
+        self.assertIn(part_b * number, result.get_stdout())
+        self.assertIn(part_c * number, result.get_stdout())
  
     def test__async_wait_periods(self):
         num_secs = 3
