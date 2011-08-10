@@ -43,6 +43,12 @@ class SimpleExecution(TestCase):
         self.assertEquals(result.get_stderr(), "")
         newline = "\r\n" if os.name == 'nt' else "\n"
         self.assertEquals(result.get_stdout(), "hello%s" % newline)
+    def test__execute_with_env(self):
+        key = "some_key"
+        value = "some_value"
+        output = local.execute("set", shell=True, env={key:value}).get_stdout()
+        self.assertIn(key, output) 
+        self.assertIn(value, output)
     def test__sync_execute_stderr(self):
         produce_stderr_command = ["-c",
                                   "import sys;sys.stderr.write('hello')"]
