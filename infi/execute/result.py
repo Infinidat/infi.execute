@@ -84,8 +84,17 @@ class Result(object):
         return self.get_returncode()
     def _check_return_code(self):
         returncode = self.get_returncode()
+        if returncode is not None:
+            # Although the process died, there may be some data in the pipes left.
+            self._flush_pipes()
         if self._assert_success and returncode is not None and returncode != 0:
             raise ExecutionError(self)
+    def _flush_pipes(self):
+        for string_io, pipe in ((self._output, self._popen.stdout), (self._error, self._popen.stderr)):
+            if pipe:
+                data = pipe.read(-1)
+                if data:
+                    string_io.write(data)
     def wait(self, timeout=None):
         returned_results = wait_for_many_results([self], timeout=timeout)
         returned = self in returned_results
@@ -102,4 +111,3 @@ class Result(object):
         return self._output.getvalue()
     def get_stderr(self):
         return self._error.getvalue()
-
