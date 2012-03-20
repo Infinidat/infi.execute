@@ -1,4 +1,5 @@
 import os
+import platform
 import itertools
 from setuptools import setup, find_packages
 
