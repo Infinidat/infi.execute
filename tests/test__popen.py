@@ -1,8 +1,8 @@
-import unittest
+from .test_utils import TestCase
 import forge
 from infi.execute import runner
 
-class PopenTest(unittest.TestCase):
+class PopenTest(TestCase):
     kwargs = dict(kwargs="here", and_another="there")
     args = (1, 2, 3, 4, object())
     def setUp(self):

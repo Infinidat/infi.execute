@@ -1,8 +1,8 @@
-import unittest
+from .test_utils import TestCase
 from ast import literal_eval
 from infi.execute.utils import quote
 
-class QuotingTest(unittest.TestCase):
+class QuotingTest(TestCase):
     def test__quoting(self):
         strings = [
             'hey"there', 'hello world', 'this is a quote: \'', 'this is a $ dollar sign', '"quoted string"'

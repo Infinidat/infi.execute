@@ -1,7 +1,7 @@
 import os
 import sys
 from time import time, sleep
-import unittest
+from . import test_utils
 from infi.execute import (
     local,
     execute,
@@ -15,7 +15,7 @@ from infi.execute import (
     )
 from contextlib import contextmanager
 
-class TestCase(unittest.TestCase):
+class TestCase(test_utils.TestCase):
     def assertImmediate(self):
         return self.assertTakesAlmost(0)
     @contextmanager

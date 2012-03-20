@@ -1,8 +1,8 @@
 from infi.execute import utils
 import os
-import unittest
+from .test_utils import TestCase
 
-class NonblockingTest(unittest.TestCase):
+class NonblockingTest(TestCase):
     def test__nonblocking(self):
         if os.name == 'nt':
             raise unittest.SkipTest("Not available on Windows")
