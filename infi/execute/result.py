@@ -9,6 +9,7 @@ import signal
 import time
 
 MAX_INPUT_CHUNK_SIZE = 1024
+RESOURCE_TEMPORARILY_UNAVAILABLE = 11
 
 class Result(object):
     def __init__(self, command, popen, stdin, assert_success, timeout):
@@ -89,10 +90,17 @@ class Result(object):
             self._flush_pipes()
         if self._assert_success and returncode is not None and returncode != 0:
             raise ExecutionError(self)
+    def _read_from_pipe(self, pipe):
+        try:
+            return pipe.read(-1)
+        except IOError, io_error:
+            if io_error.errno == RESOURCE_TEMPORARILY_UNAVAILABLE:
+                return self._read_from_pipe(pipe)
+            raise
     def _flush_pipes(self):
         for string_io, pipe in ((self._output, self._popen.stdout), (self._error, self._popen.stderr)):
             if pipe:
-                data = pipe.read(-1)
+                data = self._read_from_pipe(pipe)
                 if data:
                     string_io.write(data)
     def wait(self, timeout=None):
