@@ -39,11 +39,11 @@ class TestSSHPopen(PopenTest):
     def test__list_command(self):
         self._test__popen_execution(["echo", "hello"], [self.SSH, self.host, "echo hello"])
     def test__string_command(self):
-        self._test__popen_execution("echo hello", "{} {} \"echo hello\"".format(self.SSH, self.host))
+        self._test__popen_execution("echo hello", "{0} {1} \"echo hello\"".format(self.SSH, self.host))
     def test__list_command_with_quoting(self):
         self._test__popen_execution(["echo", "hello there"], [self.SSH, self.host, "echo \"hello there\""])
     def test__string_command_with_quoting(self):
-        self._test__popen_execution("echo \"hello there\"", "{} {} \"echo \\\"hello there\\\"\"".format(self.SSH, self.host))
+        self._test__popen_execution("echo \"hello there\"", "{0} {1} \"echo \\\"hello there\\\"\"".format(self.SSH, self.host))
     def _test__popen_execution(self, cmd, expected_translation):
         expected_result = self.forge.create_sentinel()
         self.runner.popen(expected_translation, shell=True, *self.args, **self.kwargs).and_return(expected_result)

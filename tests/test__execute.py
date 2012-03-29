@@ -63,7 +63,7 @@ class SimpleExecution(TestCase):
         num_secs = 3
         with self.assertTakesAlmost(num_secs, 1):
             with self.assertImmediate():
-                result = execute_async("sleep {}".format(num_secs), shell=True)
+                result = execute_async("sleep {0}".format(num_secs), shell=True)
             self.assertIsNone(result.get_returncode())
             self.assertFalse(result.is_finished())
             self.assertIsNone(result.poll())
@@ -123,7 +123,7 @@ class SimpleExecution(TestCase):
         num_secs = 3
         with self.assertTakesAlmost(num_secs):
             with self.assertImmediate():
-                result = execute_async("sleep {}".format(num_secs), shell=True)
+                result = execute_async("sleep {0}".format(num_secs), shell=True)
             self.assertFalse(result.is_finished())
             with self.assertTakesAlmost(1):
                 self.assertRaises(CommandTimeout, result.wait, **{'timeout':1})
