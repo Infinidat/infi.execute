@@ -1,11 +1,11 @@
 from infi.execute import utils
 import os
-from .test_utils import TestCase
+from .test_utils import TestCase, SkipTest
 
 class NonblockingTest(TestCase):
     def test__nonblocking(self):
         if os.name == 'nt':
-            raise unittest.SkipTest("Not available on Windows")
+            raise SkipTest("Not available on Windows")
         fd_in, fd_out = os.pipe()
         file_in = os.fdopen(fd_in, "rb")
         file_out = os.fdopen(fd_out, "wb")
