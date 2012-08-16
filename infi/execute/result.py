@@ -91,12 +91,12 @@ class Result(object):
         if self._assert_success and returncode is not None and returncode != 0:
             raise ExecutionError(self)
     def _read_from_pipe(self, pipe):
-        try:
-            return pipe.read(-1)
-        except IOError, io_error:
-            if io_error.errno == RESOURCE_TEMPORARILY_UNAVAILABLE:
-                return self._read_from_pipe(pipe)
-            raise
+        while True:
+            try:
+                return pipe.read(-1)
+            except IOError, io_error:
+                if io_error.errno != RESOURCE_TEMPORARILY_UNAVAILABLE:
+                    raise
     def _flush_pipes(self):
         for string_io, pipe in ((self._output, self._popen.stdout), (self._error, self._popen.stderr)):
             if pipe:
