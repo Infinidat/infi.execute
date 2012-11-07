@@ -7,8 +7,9 @@ from subprocess import PIPE
 class Runner(object):
     def popen(self, *args, **kwargs):
         raise NotImplementedError()
-    def execute_async(self, command, shell=False, assert_success=False, stdin=None, timeout=None, env=None):
-        popen = self.popen(command, shell=shell, stderr=PIPE, stdout=PIPE, stdin=PIPE, env=env)
+    def execute_async(self, command, shell=False, assert_success=False, stdin=None, timeout=None, env=None,
+                      close_fds=True):
+        popen = self.popen(command, shell=shell, stderr=PIPE, stdout=PIPE, stdin=PIPE, env=env, close_fds=close_fds)
         return Result(command, popen,
                       stdin=stdin,
                       assert_success=assert_success,
