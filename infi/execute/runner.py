@@ -3,12 +3,15 @@ from .utils import quote
 from .result import Result
 from .exceptions import *
 from subprocess import PIPE
+import os
 
 class Runner(object):
     def popen(self, *args, **kwargs):
         raise NotImplementedError()
     def execute_async(self, command, shell=False, assert_success=False, stdin=None, timeout=None, env=None,
-                      close_fds=True):
+                      close_fds=None):
+        if close_fds is None:
+            close_fds = False if os.name == 'nt' else True
         popen = self.popen(command, shell=shell, stderr=PIPE, stdout=PIPE, stdin=PIPE, env=env, close_fds=close_fds)
         return Result(command, popen,
                       stdin=stdin,
