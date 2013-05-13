@@ -1,8 +1,11 @@
-from subprocess import Popen
+try:
+    from gevent.subprocess import Popen, PIPE
+except ImportError:
+    from subprocess import Popen, PIPE
+
 from .utils import quote
 from .result import Result
 from .exceptions import *
-from subprocess import PIPE
 import os
 
 class Runner(object):

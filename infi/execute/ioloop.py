@@ -1,7 +1,12 @@
 import os
-from select import select as select_unix
+try:
+    from gevent.select import select as select_unix
+    from gevent import sleep
+except:
+    from select import select as select_unix
+    from time import sleep
 from .utils import _get_named_pipe_from_fileno
-from time import time, sleep
+from time import time
 
 def select_windows(rlist, wlist, xlist, timeout, retry=True):
     """ on Windows, select() works only of sockets

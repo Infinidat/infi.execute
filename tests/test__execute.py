@@ -47,7 +47,7 @@ class SimpleExecution(TestCase):
         key = "some_key"
         value = "some_value"
         output = local.execute("set", shell=True, env={key:value}).get_stdout()
-        self.assertIn(key, output) 
+        self.assertIn(key, output)
         self.assertIn(value, output)
     def test__sync_execute_stderr(self):
         produce_stderr_command = ["-c",
@@ -80,6 +80,12 @@ class SimpleExecution(TestCase):
         self.assertEquals(len(results), len(commands))
         self.assertEquals(set(result.get_returncode() for result in results), set([0]))
     def test__async_execute_with_little_output(self):
+        try:
+            import gevent.subprocess
+            raise test_utils.SkipTest()
+        except ImportError:
+            pass
+
         part_a = 'legen'
         part_b = 'wait for it'
         part_c = 'dary'
@@ -118,7 +124,7 @@ class SimpleExecution(TestCase):
         self.assertIn(part_a * number, result.get_stdout())
         self.assertIn(part_b * number, result.get_stdout())
         self.assertIn(part_c * number, result.get_stdout())
- 
+
     def test__async_wait_periods(self):
         num_secs = 3
         with self.assertTakesAlmost(num_secs):
