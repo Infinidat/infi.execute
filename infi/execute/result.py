@@ -1,7 +1,7 @@
 from .waiting import wait_for_many_results
 from .exceptions import CommandTimeout
 from .exceptions import ExecutionError
-from .utils import make_fd_non_blocking
+from .utils import make_fd_non_blocking, non_blocking_read, non_blocking_write
 from cStringIO import StringIO
 import os
 import select
@@ -51,7 +51,7 @@ class Result(object):
         on how much we read
         """
         count = kwargs.get('count', -1)
-        output = self._popen.stdout.read(count)
+        output = non_blocking_read(self._popen.stdout, count)
         if not output:
             self._popen.stdout.close()
             self._popen.stdout = None
@@ -60,8 +60,7 @@ class Result(object):
             self._register_stdout(ioloop)
     def _handle_stdin(self, ioloop, _):
         input = self._input.read(MAX_INPUT_CHUNK_SIZE)
-        if input:
-            self._popen.stdin.write(input)
+        non_blocking_write(self._popen.stdin, input)
         if len(input) <  MAX_INPUT_CHUNK_SIZE:
             self._popen.stdin.close()
             self._popen.stdin = None
@@ -72,7 +71,7 @@ class Result(object):
         on how much we read
         """
         count = kwargs.get('count', -1)
-        output = self._popen.stderr.read(count)
+        output = non_blocking_read(self._popen.stderr, count)
         if not output:
             self._popen.stderr.close()
             self._popen.stderr = None
@@ -93,7 +92,7 @@ class Result(object):
     def _read_from_pipe(self, pipe):
         while True:
             try:
-                return pipe.read(-1)
+                return non_blocking_read(pipe, -1)
             except IOError, io_error:
                 if io_error.errno != RESOURCE_TEMPORARILY_UNAVAILABLE:
                     raise

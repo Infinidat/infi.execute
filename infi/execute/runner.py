@@ -3,7 +3,7 @@ try:
 except ImportError:
     from subprocess import Popen, PIPE
 
-from .utils import quote
+from .utils import quote, BUFSIZE
 from .result import Result
 from .exceptions import *
 import os
@@ -15,7 +15,8 @@ class Runner(object):
                       close_fds=None):
         if close_fds is None:
             close_fds = False if os.name == 'nt' else True
-        popen = self.popen(command, shell=shell, stderr=PIPE, stdout=PIPE, stdin=PIPE, env=env, close_fds=close_fds)
+        popen = self.popen(command, shell=shell, stderr=PIPE, stdout=PIPE, stdin=PIPE, env=env, close_fds=close_fds,
+                           bufsize=BUFSIZE)
         return Result(command, popen,
                       stdin=stdin,
                       assert_success=assert_success,

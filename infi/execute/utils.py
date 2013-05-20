@@ -2,6 +2,7 @@ import os
 
 INVALID_HANDLE_VALUE = -1
 PIPE_NOWAIT = 1
+BUFSIZE = 4096
 
 def _make_fd_non_blocking_unix(fd):
     import fcntl
@@ -50,3 +51,20 @@ def quote(s):
         s = s.replace("'", "\\'")
     return s
 
+def non_blocking_read(file_obj, count):
+    try:
+        import gevent.subprocess
+        import gevent.os
+        return gevent.os.nb_read(file_obj.fileno(), count if count>=0 else BUFSIZE)
+    except ImportError:
+        return file_obj.read(count)
+
+def non_blocking_write(file_obj, input_buffer):
+    if not input_buffer:
+        return
+    try:
+        import gevent.subprocess
+        import gevent.os
+        gevent.os.nb_write(file_obj.fileno(), input_buffer)
+    except ImportError:
+        file_obj.write(input_buffer)
