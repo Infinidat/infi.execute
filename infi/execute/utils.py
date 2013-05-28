@@ -55,7 +55,8 @@ def non_blocking_read(file_obj, count):
     try:
         import gevent.subprocess
         import gevent.os
-        return gevent.os.nb_read(file_obj.fileno(), count if count>=0 else BUFSIZE)
+        from gevent.os import nb_read
+        return nb_read(file_obj.fileno(), count if count >= 0 else BUFSIZE)
     except ImportError:
         return file_obj.read(count)
 
@@ -65,6 +66,7 @@ def non_blocking_write(file_obj, input_buffer):
     try:
         import gevent.subprocess
         import gevent.os
-        gevent.os.nb_write(file_obj.fileno(), input_buffer)
+        from gevent.os import nb_write
+        nb_write(file_obj.fileno(), input_buffer)
     except ImportError:
         file_obj.write(input_buffer)
