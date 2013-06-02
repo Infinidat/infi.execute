@@ -169,3 +169,29 @@ class ErrorExitTest(TestCase):
             with self.assertRaises(CommandTimeout) as caught:
                 result.wait()
 
+
+def is_gevent_importable():
+    try:
+        import gevent.subprocess
+    except ImportError:
+        return False
+    return True
+
+
+class GeventTestCase(test_utils.TestCase):
+    def setUp(self):
+        if os.name == 'nt' or not is_gevent_importable():
+            raise test_utils.SkipTest("available on posix systems with gevent.subprocess")
+
+    def test_async_with_another_greenlet_running(self):
+        import gevent
+        event = gevent.event.Event()
+        def func():
+            event.set()
+        result = execute_async("sleep 3", shell=True)
+        greenlet = gevent.spawn(func)
+        self.assertFalse(event.is_set())
+        result.wait()
+        self.assertTrue(event.is_set())
+        greenlet.join()
+
