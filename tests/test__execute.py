@@ -188,10 +188,19 @@ class GeventTestCase(test_utils.TestCase):
         event = gevent.event.Event()
         def func():
             event.set()
-        result = execute_async("sleep 3", shell=True)
+        result = execute_async("sleep 1", shell=True)
         greenlet = gevent.spawn(func)
         self.assertFalse(event.is_set())
         result.wait()
         self.assertTrue(event.is_set())
         greenlet.join()
 
+    def test_sync_with_another_greenlet_running(self):
+        import gevent
+        event = gevent.event.Event()
+        def func():
+            event.set()
+        greenlet = gevent.spawn(func)
+        execute("sleep 1", shell=True)
+        self.assertTrue(event.is_set())
+        greenlet.join()
