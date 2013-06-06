@@ -9,12 +9,12 @@ from .utils import _get_named_pipe_from_fileno
 from time import time
 
 def select_windows(rlist, wlist, xlist, timeout, retry=True):
-    """ on Windows, select() works only of sockets
+    """ on Windows, select() works only on sockets
     work of anonymous pipes is done as follows:
         PeekNamedPipe returns the amount of data avaialble.
         ReadFile calls with a higher size will be blocked
 
-    so, in order to support size-limited reads, this function doesn't return list of file distriptors,
+    so, in order to support size-limited reads, this function doesn't return list of file descriptors,
     but a list of tuples: (fd, bytes_available,)
 
     since IOLoop.do_iterations calls select with xlist=[], I do not iterate over xlist at all
