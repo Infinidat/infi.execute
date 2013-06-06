@@ -1,4 +1,4 @@
-Introduciton
+Introduction
 ------------
 infi.execute is a utility for running processes in various ways. It provides several facilities, most of which are simply convenience wrappers over existing stdlib functionality.
 
