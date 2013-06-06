@@ -119,7 +119,19 @@ class SimpleExecution(TestCase):
         command = ["-c", "from sys import stdout; from time import sleep; stdout.write('%s'*%s);stdout.flush(); sleep(2); stdout.write('%s'*%s);stdout.flush(); sleep(2); stdout.write('%s'*%s); stdout.flush(); sleep(2)" % \
                         (part_a, number, part_b, number, part_c, number)]
         command.insert(0,sys.executable)
-        num_secs = 6
+        result = execute(command)
+        self.assertIn(part_a * number, result.get_stdout())
+        self.assertIn(part_b * number, result.get_stdout())
+        self.assertIn(part_c * number, result.get_stdout())
+
+    def test__sync_execute_with_huge_output_one_shot(self):
+        part_a = 'legen'
+        part_b = 'wait for it'
+        part_c = 'dary'
+        number = 65536
+        command = ["-c", "from sys import stdout; from time import sleep; stdout.write('%s'*%s); stdout.write('%s'*%s); stdout.write('%s'*%s);" % \
+                        (part_a, number, part_b, number, part_c, number)]
+        command.insert(0,sys.executable)
         result = execute(command)
         self.assertIn(part_a * number, result.get_stdout())
         self.assertIn(part_b * number, result.get_stdout())
