@@ -19,7 +19,7 @@ class TestCase(test_utils.TestCase):
     def assertImmediate(self):
         return self.assertTakesAlmost(0)
     @contextmanager
-    def assertTakesAlmost(self, secs, delta=0.5):
+    def assertTakesAlmost(self, secs, delta=1):
         start_time = time()
         yield None
         self.assertLess(abs(time()-(start_time + secs)), delta)
