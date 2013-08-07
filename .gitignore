@@ -12,6 +12,7 @@ bin
 develop-eggs
 .installed.cfg
 .cache
+bootstrap.py
 
 # Installer logs
 pip-log.txt
