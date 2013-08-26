@@ -109,7 +109,7 @@ class Result(object):
             raise CommandTimeout(self)
         return returned
     def is_finished(self):
-        return self.get_returncode() is not None
+        return self.poll() is not None
     def __repr__(self):
         return "<pid %s: %s>" % (self.get_pid(), self._command)
     def get_pid(self):
