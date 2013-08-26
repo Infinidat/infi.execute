@@ -32,6 +32,7 @@ class Result(object):
     def kill(self, sig=signal.SIGTERM):
         if not self.is_finished():
             os.kill(self.get_pid(), sig)
+            time.sleep(0)
 
     def register_to_ioloop(self, ioloop):
         if self._popen.stdout is not None:
