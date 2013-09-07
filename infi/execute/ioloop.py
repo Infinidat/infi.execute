@@ -63,18 +63,17 @@ class IOLoop(object):
         if fd in collection:
             raise NotImplementedError("Multiple registrations on single file")
         collection[fd] = handler
-    def do_iteration(self, timeout=None, flush=False):
-        while True:
-            reads, writes, _ = select(self._reads.keys(), self._writes.keys(), [], timeout)
-            if not reads and not writes:
-                break
-            for readable in reads:
-                self._handle_readable(readable)
-            for writeable in writes:
-                self._handle_writeable(writeable)
-            if not flush:
-                # 'flush' means wait until all reads and writes are handled; we won't loop if it's false
-                break
+    def do_iteration(self, timeout=None):
+        reads, writes, _ = select(self._reads.keys(), self._writes.keys(), [], timeout)
+        for readable in reads:
+            self._handle_readable(readable)
+        for writeable in writes:
+            self._handle_writeable(writeable)
+        return reads or writes
+    def flush(self):
+        # handle the pipes until there is nothing more to read/write
+        while self.do_iteration(0):
+            pass
     def _handle_readable(self, f):
         """ because anonymous pipes in windows can be blocked, we need to pay attention
         on how much we read
