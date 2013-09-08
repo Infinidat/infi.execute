@@ -20,9 +20,13 @@ def wait_for_many_results(results, **kwargs):
         _sweep_finished_results(results, returned)
         if not _should_still_wait(results, deadline=deadline):
             break
-    ioloop.flush()
     _sweep_finished_results(results, returned)
     return returned
+
+def flush(result):
+    ioloop = IOLoop()
+    result.register_to_ioloop(ioloop)
+    ioloop.flush()
 
 def _get_deadline(results, timeout=None):
     """ returns the earliest deadline point in time """

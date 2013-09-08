@@ -72,6 +72,8 @@ class IOLoop(object):
         return reads or writes
     def flush(self):
         # handle the pipes until there is nothing more to read/write
+        # note that we don't need a timeout because the process is either finished or killed
+        # when this function is called
         while self.do_iteration(0):
             pass
     def _handle_readable(self, f):
