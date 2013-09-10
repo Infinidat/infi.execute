@@ -46,11 +46,10 @@ class Result(object):
         ioloop.register_read(self._popen.stdout, self._handle_stdout)
     def _register_stderr(self, ioloop):
         ioloop.register_read(self._popen.stderr, self._handle_stderr)
-    def _handle_stdout(self, ioloop, _, **kwargs):
+    def _handle_stdout(self, ioloop, f, count=-1):
         """ because anonymous pipes in windows can be blocked, we need to pay attention
         on how much we read
         """
-        count = kwargs.get('count', -1)
         output = non_blocking_read(self._popen.stdout, count)
         if not output:
             self._popen.stdout.close()
@@ -58,7 +57,7 @@ class Result(object):
         else:
             self._output.write(output)
             self._register_stdout(ioloop)
-    def _handle_stdin(self, ioloop, _):
+    def _handle_stdin(self, ioloop, f):
         input = self._input.read(MAX_INPUT_CHUNK_SIZE)
         non_blocking_write(self._popen.stdin, input)
         if len(input) <  MAX_INPUT_CHUNK_SIZE:
@@ -66,11 +65,10 @@ class Result(object):
             self._popen.stdin = None
         else:
             self._register_stdin(ioloop)
-    def _handle_stderr(self, ioloop, _, **kwargs):
+    def _handle_stderr(self, ioloop, f, count=-1):
         """ because anonymous pipes in windows can be blocked, we need to pay attention
         on how much we read
         """
-        count = kwargs.get('count', -1)
         output = non_blocking_read(self._popen.stderr, count)
         if not output:
             self._popen.stderr.close()

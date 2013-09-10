@@ -5,23 +5,22 @@ DEFAULT_SAMPLE_INTERVAL = 0.05
 
 def wait_for_many_results(results, **kwargs):
     ioloop = IOLoop()
-    results = list(results)
-    for result in results:
+    results = dict((result, None) for result in results)
+    for result in results.keys():
         result.register_to_ioloop(ioloop)
     timeout = kwargs.pop('timeout', None)
-    deadline = _get_deadline(results, timeout)
-    returned = [None for result in results]
+    deadline = _get_deadline(results.keys(), timeout)
 
     # Note that the _should_still_wait predicate might return False if
     # things happen real quickly
     while True:
         current_time = time.time()
         ioloop.do_iteration(_get_wait_interval(current_time, deadline))
-        _sweep_finished_results(results, returned)
+        _sweep_finished_results(results)
         if not _should_still_wait(results, deadline=deadline):
             break
-    _sweep_finished_results(results, returned)
-    return returned
+    _sweep_finished_results(results)
+    return results.values()
 
 def flush(result):
     ioloop = IOLoop()
@@ -43,19 +42,16 @@ def _get_wait_interval(current_time, deadline):
         return DEFAULT_SAMPLE_INTERVAL
     return max(0, min(DEFAULT_SAMPLE_INTERVAL, (deadline - current_time)))
 
-def _sweep_finished_results(results, returned):
-    for index, result in enumerate(results):
-        if result is None:
+def _sweep_finished_results(results):
+    for result in results.keys():
+        if results[result] is not None:
             continue
-        result.poll()
         if result.is_finished():
-            returned[index] = result
-            results[index] = None
+            results[result] = result
 
 def _should_still_wait(results, deadline):
-    if all(r is None for r in results):
+    if all(r is not None for r in results.values()):
         return False
-    current_time = time.time()
     if deadline is not None and deadline < time.time():
         return False
     return True
