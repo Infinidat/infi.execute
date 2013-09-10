@@ -24,10 +24,13 @@ class Result(object):
             self._deadline = time.time() + timeout
         make_fd_non_blocking(self._popen.stdout.fileno())
         make_fd_non_blocking(self._popen.stderr.fileno())
+
     def get_deadline(self):
         return self._deadline
+
     def get_returncode(self):
         return self._popen.returncode
+
     def kill(self, sig=signal.SIGTERM):
         if not self.is_finished():
             os.kill(self.get_pid(), sig)
@@ -40,12 +43,16 @@ class Result(object):
             self._register_stderr(ioloop)
         if self._popen.stdin is not None:
             self._register_stdin(ioloop)
+
     def _register_stdin(self, ioloop):
         ioloop.register_write(self._popen.stdin, self._handle_stdin)
+
     def _register_stdout(self, ioloop):
         ioloop.register_read(self._popen.stdout, self._handle_stdout)
+
     def _register_stderr(self, ioloop):
         ioloop.register_read(self._popen.stderr, self._handle_stderr)
+
     def unregister_from_ioloop(self, ioloop):
         if self._popen.stdout is not None:
             ioloop.unregister_read(self._popen.stdout)
@@ -53,6 +60,7 @@ class Result(object):
             ioloop.unregister_read(self._popen.stderr)
         if self._popen.stdin is not None:
             ioloop.unregister_write(self._popen.stdin)
+
     def _handle_stdout(self, ioloop, f, count=-1):
         """ because anonymous pipes in windows can be blocked, we need to pay attention
         on how much we read
@@ -64,6 +72,7 @@ class Result(object):
         else:
             self._output.write(output)
             self._register_stdout(ioloop)
+
     def _handle_stdin(self, ioloop, f):
         input = self._input.read(MAX_INPUT_CHUNK_SIZE)
         non_blocking_write(self._popen.stdin, input)
@@ -72,6 +81,7 @@ class Result(object):
             self._popen.stdin = None
         else:
             self._register_stdin(ioloop)
+
     def _handle_stderr(self, ioloop, f, count=-1):
         """ because anonymous pipes in windows can be blocked, we need to pay attention
         on how much we read
@@ -83,29 +93,37 @@ class Result(object):
         else:
             self._error.write(output)
             self._register_stderr(ioloop)
+
     def poll(self):
         self._popen.poll()
         self._check_return_code()
         return self.get_returncode()
+
     def _check_return_code(self):
         returncode = self.get_returncode()
         if returncode is not None:
             flush(self)
         if self._assert_success and returncode is not None and returncode != 0:
             raise ExecutionError(self)
+
     def wait(self, timeout=None):
         returned_results = wait_for_many_results([self], timeout=timeout)
         returned = self in returned_results
         if not returned and (self.get_deadline() or timeout):
             raise CommandTimeout(self)
         return returned
+
     def is_finished(self):
         return self.poll() is not None
+
     def __repr__(self):
         return "<pid %s: %s>" % (self.get_pid(), self._command)
+
     def get_pid(self):
         return self._popen.pid
+
     def get_stdout(self):
         return self._output.getvalue()
+
     def get_stderr(self):
         return self._error.getvalue()

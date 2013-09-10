@@ -52,25 +52,33 @@ class IOLoop(object):
     def __init__(self):
         super(IOLoop, self).__init__()
         self.reset()
+
     def reset(self):
         self._reads = {}
         self._writes = {}
+
     def register_read(self, fd, handler):
         self._register(self._reads, fd, handler)
+
     def register_write(self, fd, handler):
         self._register(self._writes, fd, handler)
+
     def _register(self, collection, fd, handler):
         if fd in collection:
             raise NotImplementedError("Multiple registrations on single file")
         collection[fd] = handler
+
     def unregister_read(self, fd):
         self._unregister(self._reads, fd)
+
     def unregister_write(self, fd):
         self._unregister(self._writes, fd)
+
     def _unregister(self, collection, fd):
         if fd not in collection:
             raise NotImplementedError("Unregistering non-registered file")
         collection.pop(fd)
+
     def do_iteration(self, timeout=None):
         reads, writes, _ = select(self._reads.keys(), self._writes.keys(), [], timeout)
         for readable in reads:
@@ -78,6 +86,7 @@ class IOLoop(object):
         for writeable in writes:
             self._handle_writeable(writeable)
         return reads or writes
+
     def flush(self):
         # read from the pipes until the end
         # the process is finished (or killed) when this function is called
@@ -87,6 +96,7 @@ class IOLoop(object):
         # The read handles will not be re-registered when they are exhausted
         while self._reads:
             [self._handle_readable(r) for r in self._reads.keys()]
+
     def _handle_readable(self, f):
         """ because anonymous pipes in windows can be blocked, we need to pay attention
         on how much we read
@@ -97,6 +107,7 @@ class IOLoop(object):
         handler = self._reads.pop(f, None)
         if handler is not None:
             handler(self, f, count=count)
+
     def _handle_writeable(self, f):
         handler = self._writes.pop(f, None)
         if handler is not None:
