@@ -1,32 +1,54 @@
-#### Python
-*.py[co]
-
-# Packages
-*.egg
+# generic
+*.tmp
+*.swp
+*.pyc
+*.pyo
+*.bak
 *.egg-info
-dist
-build
-eggs
-parts
-bin
-develop-eggs
-.installed.cfg
-.cache
+*.EGG-INFO
+.coverage
+.settings
+
+# eclipse
+.project
+.pydevproject
+
+# setuptools
+bin/
+build/
+dist/
+setup.py
+
+# buildout
+buildout.in.cfg
+.installed*.cfg
+.cache/
+eggs/
+develop-eggs/
+parts/
+build/
+dist/
+.achievements
 bootstrap.py
 
-# Installer logs
-pip-log.txt
+# scm
+.bzr/
+.svn/
+.hg/
 
-# Unit test / coverage reports
-.coverage
-.tox
-
-#### Eclipse
-*.pydevproject
-.project
-.metadata
+# msi-related
+parts/wix
+parts/product*
+parts/*.wixpdb
+parts/*.msi
 
 
-#### Emacs
-\#*\#
-.#*
+.codeintel
+*sublime*
+
+tmp*
+!tmp*py
+buildout.in
+
+src/infi/execute/__version__.py
+
