@@ -71,11 +71,14 @@ class IOLoop(object):
             self._handle_writeable(writeable)
         return reads or writes
     def flush(self):
-        # handle the pipes until there is nothing more to read/write
-        # note that we don't need a timeout because the process is either finished or killed
-        # when this function is called
-        while self.do_iteration(0):
-            pass
+        # read from the pipes until the end
+        # the process is finished (or killed) when this function is called
+        # we don't use do_iteration and instead call directly to the read handlers anyway -
+        # this is because PeekNamedPipe won't work now (the pipe is closed), and it's safe to
+        # read now that the pipes are closed, read will always finish and will never block
+        # The read handles will not be re-registered when they are exhausted
+        while self._reads:
+            [self._handle_readable(r) for r in self._reads.keys()]
     def _handle_readable(self, f):
         """ because anonymous pipes in windows can be blocked, we need to pay attention
         on how much we read

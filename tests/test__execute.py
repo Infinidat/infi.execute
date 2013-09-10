@@ -120,6 +120,7 @@ class SimpleExecution(TestCase):
                         (part_a, number, part_b, number, part_c, number)]
         command.insert(0,sys.executable)
         result = execute(command)
+        self.assertEquals(len(result.get_stdout()), len(part_a + part_b + part_c) * number)
         self.assertIn(part_a * number, result.get_stdout())
         self.assertIn(part_b * number, result.get_stdout())
         self.assertIn(part_c * number, result.get_stdout())
@@ -133,6 +134,7 @@ class SimpleExecution(TestCase):
                         (part_a, number, part_b, number, part_c, number)]
         command.insert(0,sys.executable)
         result = execute(command)
+        self.assertEquals(len(result.get_stdout()), len(part_a + part_b + part_c) * number)
         self.assertIn(part_a * number, result.get_stdout())
         self.assertIn(part_b * number, result.get_stdout())
         self.assertIn(part_c * number, result.get_stdout())
