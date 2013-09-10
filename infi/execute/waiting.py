@@ -16,10 +16,10 @@ def wait_for_many_results(results, **kwargs):
     while True:
         current_time = time.time()
         ioloop.do_iteration(_get_wait_interval(current_time, deadline))
-        _sweep_finished_results(results)
+        _sweep_finished_results(results, ioloop)
         if not _should_still_wait(results, deadline=deadline):
             break
-    _sweep_finished_results(results)
+    _sweep_finished_results(results, ioloop)
     return results.values()
 
 def flush(result):
@@ -42,12 +42,15 @@ def _get_wait_interval(current_time, deadline):
         return DEFAULT_SAMPLE_INTERVAL
     return max(0, min(DEFAULT_SAMPLE_INTERVAL, (deadline - current_time)))
 
-def _sweep_finished_results(results):
+def _sweep_finished_results(results, ioloop):
     for result in results.keys():
         if results[result] is not None:
             continue
+        # we unregister and re-register, because when is_finished returns True, the pipes are flushed and closed
+        result.unregister_from_ioloop(ioloop)
         if result.is_finished():
             results[result] = result
+        result.register_to_ioloop(ioloop)
 
 def _should_still_wait(results, deadline):
     if all(r is not None for r in results.values()):

@@ -46,6 +46,13 @@ class Result(object):
         ioloop.register_read(self._popen.stdout, self._handle_stdout)
     def _register_stderr(self, ioloop):
         ioloop.register_read(self._popen.stderr, self._handle_stderr)
+    def unregister_from_ioloop(self, ioloop):
+        if self._popen.stdout is not None:
+            ioloop.unregister_read(self._popen.stdout)
+        if self._popen.stderr is not None:
+            ioloop.unregister_read(self._popen.stderr)
+        if self._popen.stdin is not None:
+            ioloop.unregister_write(self._popen.stdin)
     def _handle_stdout(self, ioloop, f, count=-1):
         """ because anonymous pipes in windows can be blocked, we need to pay attention
         on how much we read

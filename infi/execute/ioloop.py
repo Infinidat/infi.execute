@@ -63,6 +63,14 @@ class IOLoop(object):
         if fd in collection:
             raise NotImplementedError("Multiple registrations on single file")
         collection[fd] = handler
+    def unregister_read(self, fd):
+        self._unregister(self._reads, fd)
+    def unregister_write(self, fd):
+        self._unregister(self._writes, fd)
+    def _unregister(self, collection, fd):
+        if fd not in collection:
+            raise NotImplementedError("Unregistering non-registered file")
+        collection.pop(fd)
     def do_iteration(self, timeout=None):
         reads, writes, _ = select(self._reads.keys(), self._writes.keys(), [], timeout)
         for readable in reads:
