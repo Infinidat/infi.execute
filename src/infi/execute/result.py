@@ -4,9 +4,10 @@ from .exceptions import ExecutionError
 from .utils import make_fd_non_blocking, non_blocking_read, non_blocking_write
 from cStringIO import StringIO
 import os
-import select
 import signal
-import time
+
+from .ioloop import time, sleep
+
 
 MAX_INPUT_CHUNK_SIZE = 1024
 
@@ -21,20 +22,17 @@ class Result(object):
         self._assert_success = assert_success
         self._deadline = None
         if timeout is not None:
-            self._deadline = time.time() + timeout
+            self._deadline = time() + timeout
         make_fd_non_blocking(self._popen.stdout.fileno())
         make_fd_non_blocking(self._popen.stderr.fileno())
-
     def get_deadline(self):
         return self._deadline
-
     def get_returncode(self):
         return self._popen.returncode
-
     def kill(self, sig=signal.SIGTERM):
         if not self.is_finished():
             os.kill(self.get_pid(), sig)
-            time.sleep(0)
+            sleep(0)
 
     def register_to_ioloop(self, ioloop):
         if self._popen.stdout is not None:

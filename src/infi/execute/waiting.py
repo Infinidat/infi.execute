@@ -1,5 +1,4 @@
-import time
-from .ioloop import IOLoop
+from .ioloop import IOLoop, time
 
 DEFAULT_SAMPLE_INTERVAL = 0.05
 
@@ -14,7 +13,7 @@ def wait_for_many_results(results, **kwargs):
     # Note that the _should_still_wait predicate might return False if
     # things happen real quickly
     while True:
-        current_time = time.time()
+        current_time = time()
         ioloop.do_iteration(_get_wait_interval(current_time, deadline))
         _sweep_finished_results(results, ioloop)
         if not _should_still_wait(results, deadline=deadline):
@@ -29,7 +28,7 @@ def flush(result):
 
 def _get_deadline(results, timeout=None):
     """ returns the earliest deadline point in time """
-    start_time = time.time()
+    start_time = time()
 
     all_deadlines = set(result.get_deadline() for result in results)
     all_deadlines.discard(None)
@@ -55,6 +54,6 @@ def _sweep_finished_results(results, ioloop):
 def _should_still_wait(results, deadline):
     if all(r is not None for r in results.values()):
         return False
-    if deadline is not None and deadline < time.time():
+    if deadline is not None and deadline < time():
         return False
     return True

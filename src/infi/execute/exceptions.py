@@ -6,5 +6,6 @@ class ExecutionError(Exception):
                                                                                                            result.get_stderr()))
         self.result = result
 
+
 class CommandTimeout(ExecutionError):
     pass
