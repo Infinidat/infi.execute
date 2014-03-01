@@ -5,7 +5,6 @@ except ImportError:
 
 from .utils import quote, BUFSIZE
 from .result import Result
-from .exceptions import *
 import os
 
 class Runner(object):
