@@ -1,5 +1,4 @@
 import os
-from ctypes import WinError
 
 INVALID_HANDLE_VALUE = -1
 PIPE_NOWAIT = 1
@@ -12,6 +11,7 @@ def _make_fd_non_blocking_unix(fd):
 
 def _get_named_pipe_from_fileno(fileno):
     import msvcrt
+    from ctypes import WinError
     result = msvcrt.get_osfhandle(fileno)
     if result == INVALID_HANDLE_VALUE:
         raise WinError(result)
