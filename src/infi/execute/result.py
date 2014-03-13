@@ -17,8 +17,8 @@ class Result(object):
         self._command = command
         self._popen = popen
         self._output = StringIO()
-        self._input  = StringIO(stdin or '')
-        self._error  = StringIO()
+        self._input = StringIO(stdin or '')
+        self._error = StringIO()
         self._assert_success = assert_success
         self._deadline = None
         if timeout is not None:
@@ -74,7 +74,7 @@ class Result(object):
     def _handle_stdin(self, ioloop, f):
         input = self._input.read(MAX_INPUT_CHUNK_SIZE)
         non_blocking_write(self._popen.stdin, input)
-        if len(input) <  MAX_INPUT_CHUNK_SIZE:
+        if len(input) < MAX_INPUT_CHUNK_SIZE:
             self._popen.stdin.close()
             self._popen.stdin = None
         else:

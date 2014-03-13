@@ -1,3 +1,4 @@
+# flake8: noqa
 from .__version__ import __version__
 from .runner import local, through_ssh
 execute = local.execute

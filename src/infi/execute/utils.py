@@ -11,9 +11,10 @@ def _make_fd_non_blocking_unix(fd):
 
 def _get_named_pipe_from_fileno(fileno):
     import msvcrt
+    from ctypes import WinError
     result = msvcrt.get_osfhandle(fileno)
     if result == INVALID_HANDLE_VALUE:
-        raise WinError()
+        raise WinError(result)
     return result
 
 def _make_fd_non_blocking_windows(fd):
@@ -53,8 +54,6 @@ def quote(s):
 
 def non_blocking_read(file_obj, count):
     try:
-        import gevent.subprocess
-        import gevent.os
         from gevent.os import nb_read
         return nb_read(file_obj.fileno(), count if count >= 0 else BUFSIZE)
     except ImportError:
@@ -64,8 +63,6 @@ def non_blocking_write(file_obj, input_buffer):
     if not input_buffer:
         return
     try:
-        import gevent.subprocess
-        import gevent.os
         from gevent.os import nb_write
         nb_write(file_obj.fileno(), input_buffer)
     except ImportError:

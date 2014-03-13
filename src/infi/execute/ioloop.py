@@ -7,11 +7,11 @@ except:
     from time import sleep
 from .utils import _get_named_pipe_from_fileno
 
+# used by other modules
 from time import time
 from infi.monotonic_time import monotonic_time, is_supported
 if is_supported():
     time = monotonic_time
-
 
 def select_windows(rlist, wlist, xlist, timeout, retry=True):
     """ on Windows, select() works only on sockets
@@ -117,4 +117,3 @@ class IOLoop(object):
         handler = self._writes.pop(f, None)
         if handler is not None:
             handler(self, f)
-
