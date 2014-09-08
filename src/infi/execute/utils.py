@@ -1,8 +1,10 @@
 import os
+import time
 
 INVALID_HANDLE_VALUE = -1
 PIPE_NOWAIT = 1
 BUFSIZE = 4096
+EAGAIN = 11
 
 def _make_fd_non_blocking_unix(fd):
     import fcntl
@@ -52,12 +54,22 @@ def quote(s):
         s = s.replace("'", "\\'")
     return s
 
+def retry_loop_on_eagain(func, *args, **kwargs):
+    while True:
+        try:
+            return wrapped(*args, **kwargs)
+        except IOError, error:
+            if error.errno == EAGAIN:
+                time.sleep(0.1)
+            else:
+                raise
+
 def non_blocking_read(file_obj, count):
     try:
         from gevent.os import nb_read
         return nb_read(file_obj.fileno(), count if count >= 0 else BUFSIZE)
     except ImportError:
-        return file_obj.read(count)
+        return retry_loop_on_eagain(file_obj.read, count)
 
 def non_blocking_write(file_obj, input_buffer):
     if not input_buffer:
@@ -66,4 +78,4 @@ def non_blocking_write(file_obj, input_buffer):
         from gevent.os import nb_write
         nb_write(file_obj.fileno(), input_buffer)
     except ImportError:
-        file_obj.write(input_buffer)
+        return retry_loop_on_eagain(file_obj.write, input_buffer)
