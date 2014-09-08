@@ -57,7 +57,7 @@ def quote(s):
 def retry_loop_on_eagain(func, *args, **kwargs):
     while True:
         try:
-            return wrapped(*args, **kwargs)
+            return func(*args, **kwargs)
         except IOError, error:
             if error.errno == EAGAIN:
                 time.sleep(0.1)
