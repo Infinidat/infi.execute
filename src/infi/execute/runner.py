@@ -12,11 +12,11 @@ class Runner(object):
         raise NotImplementedError()
 
     def execute_async(self, command, shell=False, assert_success=False, stdin=None, timeout=None, env=None,
-                      close_fds=None):
+                      close_fds=None, cwd=None):
         if close_fds is None:
             close_fds = False if os.name == 'nt' else True
         popen = self.popen(command, shell=shell, stderr=PIPE, stdout=PIPE, stdin=PIPE, env=env, close_fds=close_fds,
-                           bufsize=BUFSIZE)
+                           bufsize=BUFSIZE, cwd=cwd)
         return Result(command, popen,
                       stdin=stdin,
                       assert_success=assert_success,
