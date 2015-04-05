@@ -1,10 +1,12 @@
 import os
 import time
+import errno
+
 
 INVALID_HANDLE_VALUE = -1
 PIPE_NOWAIT = 1
 BUFSIZE = 4096
-EAGAIN = 11
+
 
 def _make_fd_non_blocking_unix(fd):
     import fcntl
@@ -59,7 +61,7 @@ def retry_loop_on_eagain(func, *args, **kwargs):
         try:
             return func(*args, **kwargs)
         except IOError, error:
-            if error.errno == EAGAIN:
+            if error.errno == errno.EAGAIN:
                 time.sleep(0.1)
             else:
                 raise
