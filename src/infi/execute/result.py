@@ -25,10 +25,13 @@ class Result(object):
             self._deadline = time() + timeout
         make_fd_non_blocking(self._popen.stdout.fileno())
         make_fd_non_blocking(self._popen.stderr.fileno())
+
     def get_deadline(self):
         return self._deadline
+
     def get_returncode(self):
         return self._popen.returncode
+
     def kill(self, sig=signal.SIGTERM):
         if not self.is_finished():
             os.kill(self.get_pid(), sig)
@@ -63,6 +66,8 @@ class Result(object):
         """ because anonymous pipes in windows can be blocked, we need to pay attention
         on how much we read
         """
+        if self._popen.stdout is None:
+            return
         output = non_blocking_read(self._popen.stdout, count)
         if not output:
             self._popen.stdout.close()
@@ -84,6 +89,8 @@ class Result(object):
         """ because anonymous pipes in windows can be blocked, we need to pay attention
         on how much we read
         """
+        if self._popen.stderr is None:
+            return
         output = non_blocking_read(self._popen.stderr, count)
         if not output:
             self._popen.stderr.close()
@@ -97,9 +104,26 @@ class Result(object):
         self._check_return_code()
         return self.get_returncode()
 
+    def _workaround_for_gevent_issue_191(self):
+        # https://github.com/gevent/gevent/issues/191
+        from platform import system
+        try:
+            from gevent.fileobject import FileObjectPosix
+        except ImportError:
+            return
+        if system() != "Darwin":
+            return
+        if isinstance(self._popen.stderr, FileObjectPosix):
+            self._popen.stderr.close()
+            self._popen.stderr = None
+        if isinstance(self._popen.stdout, FileObjectPosix):
+            self._popen.stdout.close()
+            self._popen.stdout = None
+
     def _check_return_code(self):
         returncode = self.get_returncode()
         if returncode is not None:
+            self._workaround_for_gevent_issue_191()
             flush(self)
         if self._assert_success and returncode is not None and returncode != 0:
             raise ExecutionError(self)
