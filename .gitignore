@@ -52,3 +52,5 @@ buildout.in
 
 src/infi/execute/__version__.py
 
+eggs
+.cache
