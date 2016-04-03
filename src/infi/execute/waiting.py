@@ -19,7 +19,7 @@ def wait_for_many_results(results, **kwargs):
         if not _should_still_wait(results, deadline=deadline):
             break
     _sweep_finished_results(results, ioloop)
-    return results.values()
+    return list(results.values())
 
 def flush(result):
     ioloop = IOLoop()

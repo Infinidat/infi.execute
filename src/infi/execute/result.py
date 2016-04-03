@@ -2,7 +2,10 @@ from .waiting import wait_for_many_results, flush
 from .exceptions import CommandTimeout
 from .exceptions import ExecutionError
 from .utils import make_fd_non_blocking, non_blocking_read, non_blocking_write
-from cStringIO import StringIO
+try:
+    from cStringIO import StringIO as BytesIO
+except ImportError:
+    from io import BytesIO
 import os
 import signal
 
@@ -16,9 +19,9 @@ class Result(object):
         super(Result, self).__init__()
         self._command = command
         self._popen = popen
-        self._output = StringIO()
-        self._input = StringIO(stdin or '')
-        self._error = StringIO()
+        self._output = BytesIO()
+        self._input = BytesIO(stdin or b'')
+        self._error = BytesIO()
         self._assert_success = assert_success
         self._deadline = None
         if timeout is not None:

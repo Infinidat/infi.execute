@@ -32,20 +32,20 @@ class MiscTest(TestCase):
         representation = repr(local.execute("echo hello", shell=True))
         self.assertGreater(len(representation), 0)
     def test__shortcuts(self):
-        self.assertIs(execute.im_func, local.execute.im_func)
-        self.assertIs(execute_assert_success.im_func, local.execute_assert_success.im_func)
-        self.assertIs(execute_async.im_func, local.execute_async.im_func)
+        self.assertEqual(execute, local.execute)
+        self.assertEqual(execute_assert_success, local.execute_assert_success)
+        self.assertEqual(execute_async, local.execute_async)
 
 class SimpleExecution(TestCase):
     def test__sync_execute_shell(self):
         result = local.execute("echo hello", shell=True)
         self.assertEquals(result.get_returncode(), 0)
-        self.assertEquals(result.get_stderr(), "")
-        newline = "\r\n" if os.name == 'nt' else "\n"
-        self.assertEquals(result.get_stdout(), "hello%s" % newline)
+        self.assertEquals(result.get_stderr(), b"")
+        newline = b"\r\n" if os.name == 'nt' else b"\n"
+        self.assertEquals(result.get_stdout(), b"hello" + newline)
     def test__execute_with_env(self):
-        key = "some_key"
-        value = "some_value"
+        key = b"some_key"
+        value = b"some_value"
         output = local.execute("set", shell=True, env={key:value}).get_stdout()
         self.assertIn(key, output)
         self.assertIn(value, output)
@@ -55,10 +55,10 @@ class SimpleExecution(TestCase):
         produce_stderr_command.insert(0,sys.executable)
 
         result = local.execute(produce_stderr_command)
-        self.assertEquals(result.get_stderr(), "hello")
+        self.assertEquals(result.get_stderr(), b"hello")
     def test__sync_execute_stdin_through_string(self):
-        result = execute("cat | cat", stdin="hello", shell=True)
-        self.assertEquals(result.get_stdout(), "hello")
+        result = execute("cat | cat", stdin=b"hello", shell=True)
+        self.assertEquals(result.get_stdout(), b"hello")
     def test__async_execute(self):
         num_secs = 3
         with self.assertTakesAlmost(num_secs, 1):
@@ -86,9 +86,9 @@ class SimpleExecution(TestCase):
         except ImportError:
             pass
 
-        part_a = 'legen'
-        part_b = 'wait for it'
-        part_c = 'dary'
+        part_a = b'legen'
+        part_b = b'wait for it'
+        part_c = b'dary'
         command = ["-c", "from sys import stdout; from time import sleep; stdout.write('%s');stdout.flush(); sleep(2); stdout.write('%s');stdout.flush(); sleep(2); stdout.write('%s'); stdout.flush(); sleep(2)" % \
                         (part_a, part_b, part_c)]
         command.insert(0,sys.executable)
@@ -112,9 +112,9 @@ class SimpleExecution(TestCase):
                 self.assertIn(part_c, result.get_stdout())
             result.wait()
     def test__sync_execute_with_huge_output(self):
-        part_a = 'legen'
-        part_b = 'wait for it'
-        part_c = 'dary'
+        part_a = b'legen'
+        part_b = b'wait for it'
+        part_c = b'dary'
         number = 65536
         command = ["-c", "from sys import stdout; from time import sleep; stdout.write('%s'*%s);stdout.flush(); sleep(2); stdout.write('%s'*%s);stdout.flush(); sleep(2); stdout.write('%s'*%s); stdout.flush(); sleep(2)" % \
                         (part_a, number, part_b, number, part_c, number)]
@@ -126,9 +126,9 @@ class SimpleExecution(TestCase):
         self.assertIn(part_c * number, result.get_stdout())
 
     def test__sync_execute_with_huge_output_one_shot(self):
-        part_a = 'legen'
-        part_b = 'wait for it'
-        part_c = 'dary'
+        part_a = b'legen'
+        part_b = b'wait for it'
+        part_c = b'dary'
         number = 65536
         command = ["-c", "from sys import stdout; from time import sleep; stdout.write('%s'*%s); stdout.write('%s'*%s); stdout.write('%s'*%s);" % \
                         (part_a, number, part_b, number, part_c, number)]
@@ -162,8 +162,8 @@ class ErrorExitTest(TestCase):
     def test__sync_failure(self):
         with self.assertRaises(ExecutionError) as caught:
             local.execute_assert_success("false", shell=True)
-        self.assertEquals(caught.exception.result.get_stderr(), "")
-        self.assertEquals(caught.exception.result.get_stdout(), "")
+        self.assertEquals(caught.exception.result.get_stderr(), b"")
+        self.assertEquals(caught.exception.result.get_stdout(), b"")
         self.assertEquals(caught.exception.result.get_returncode(), self.FALSE_RETURN_CODE)
     def test__timeout_sync(self):
         with self.assertRaises(CommandTimeout) as caught:
