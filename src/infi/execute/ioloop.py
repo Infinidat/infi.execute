@@ -85,7 +85,7 @@ class IOLoop(object):
         collection.pop(fd)
 
     def do_iteration(self, timeout=None):
-        reads, writes, _ = select(list(self._reads.keys()), list(self._writes.keys()), [], timeout)
+        reads, writes, _ = select(self._reads.keys(), self._writes.keys(), [], timeout)
         for readable in reads:
             self._handle_readable(readable)
         for writeable in writes:
@@ -100,7 +100,7 @@ class IOLoop(object):
         # read now that the pipes are closed, read will always finish and will never block
         # The read handles will not be re-registered when they are exhausted
         while self._reads:
-            [self._handle_readable(r) for r in list(self._reads.keys())]
+            [self._handle_readable(r) for r in self._reads.keys()]
 
     def _handle_readable(self, f):
         """ because anonymous pipes in windows can be blocked, we need to pay attention
