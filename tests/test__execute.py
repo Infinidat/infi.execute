@@ -15,6 +15,8 @@ from infi.execute import (
     )
 from contextlib import contextmanager
 
+PY3 = sys.version_info[0] == 3
+
 class TestCase(test_utils.TestCase):
     def assertImmediate(self):
         return self.assertTakesAlmost(0)
@@ -89,7 +91,11 @@ class SimpleExecution(TestCase):
         part_a = b'legen'
         part_b = b'wait for it'
         part_c = b'dary'
-        command = ["-c", "from sys import stdout; from time import sleep; stdout.write('%s');stdout.flush(); sleep(2); stdout.write('%s');stdout.flush(); sleep(2); stdout.write('%s'); stdout.flush(); sleep(2)" % \
+        if PY3:
+            command = ["-c", "from sys import stdout; from time import sleep; stdout.buffer.write(b'%s');stdout.flush(); sleep(2); stdout.buffer.write(b'%s');stdout.flush(); sleep(2); stdout.buffer.write(b'%s'); stdout.flush(); sleep(2)" % \
+                        (part_a.decode("ASCII"), part_b.decode("ASCII"), part_c.decode("ASCII"))]
+        else:
+            command = ["-c", "from sys import stdout; from time import sleep; stdout.write(b'%s');stdout.flush(); sleep(2); stdout.write(b'%s');stdout.flush(); sleep(2); stdout.write(b'%s'); stdout.flush(); sleep(2)" % \
                         (part_a, part_b, part_c)]
         command.insert(0,sys.executable)
         num_secs = 6
@@ -116,8 +122,13 @@ class SimpleExecution(TestCase):
         part_b = b'wait for it'
         part_c = b'dary'
         number = 65536
-        command = ["-c", "from sys import stdout; from time import sleep; stdout.write('%s'*%s);stdout.flush(); sleep(2); stdout.write('%s'*%s);stdout.flush(); sleep(2); stdout.write('%s'*%s); stdout.flush(); sleep(2)" % \
-                        (part_a, number, part_b, number, part_c, number)]
+        if PY3:
+            command = ["-c", "from sys import stdout; from time import sleep; stdout.buffer.write(b'%s'*%s);stdout.flush(); sleep(2); stdout.buffer.write(b'%s'*%s);stdout.flush(); sleep(2); stdout.buffer.write(b'%s'*%s); stdout.flush(); sleep(2)" % \
+                       (part_a.decode("ASCII"), number, part_b.decode("ASCII"), number, part_c.decode("ASCII"), number)]
+        else:
+            command = ["-c", "from sys import stdout; from time import sleep; stdout.write('%s'*%s);stdout.flush(); sleep(2); stdout.write('%s'*%s);stdout.flush(); sleep(2); stdout.write('%s'*%s); stdout.flush(); sleep(2)" % \
+                       (part_a, number, part_b, number, part_c, number)]
+
         command.insert(0,sys.executable)
         result = execute(command)
         self.assertEquals(len(result.get_stdout()), len(part_a + part_b + part_c) * number)
@@ -130,8 +141,12 @@ class SimpleExecution(TestCase):
         part_b = b'wait for it'
         part_c = b'dary'
         number = 65536
-        command = ["-c", "from sys import stdout; from time import sleep; stdout.write('%s'*%s); stdout.write('%s'*%s); stdout.write('%s'*%s);" % \
-                        (part_a, number, part_b, number, part_c, number)]
+        if PY3:
+            command = ["-c", "from sys import stdout; from time import sleep; stdout.buffer.write(b'%s'*%s); stdout.buffer.write(b'%s'*%s); stdout.buffer.write(b'%s'*%s);" % \
+                       (part_a.decode("ASCII"), number, part_b.decode("ASCII"), number, part_c.decode("ASCII"), number)]
+        else:
+            command = ["-c", "from sys import stdout; from time import sleep; stdout.write('%s'*%s); stdout.write('%s'*%s); stdout.write('%s'*%s);" % \
+                       (part_a, number, part_b, number, part_c, number)]
         command.insert(0,sys.executable)
         result = execute(command)
         self.assertEquals(len(result.get_stdout()), len(part_a + part_b + part_c) * number)
