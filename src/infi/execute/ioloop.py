@@ -86,9 +86,9 @@ class IOLoop(object):
 
     def do_iteration(self, timeout=None):
         reads, writes, _ = select(self._reads.keys(), self._writes.keys(), [], timeout)
-        for readable in reads:
+        for readable in list(reads):
             self._handle_readable(readable)
-        for writeable in writes:
+        for writeable in list(writes):
             self._handle_writeable(writeable)
         return reads or writes
 
