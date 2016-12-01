@@ -35,7 +35,12 @@ def select_windows(rlist, wlist, xlist, timeout, retry=True):
         for fd in rlist:
             bytes_available = c_ulong(0)
             handle = _get_named_pipe_from_fileno(fd.fileno())
-            result = windll.kernel32.PeekNamedPipe(c_void_p(handle), 0, c_ulong(0), 0, byref(bytes_available), 0)
+            result = windll.kernel32.PeekNamedPipe(c_void_p(handle),        # _In_       HANDLE hNamedPipe,
+                                                   None,                    # _Out_opt_  LPVOID lpBuffer,
+                                                   c_ulong(0),              # _In_       DWORD nBufferSize,
+                                                   None,                    # _Out_opt_  LPDWORD lpBytesRead,
+                                                   byref(bytes_available),  # _Out_opt_  LPDWORD lpTotalBytesAvail,
+                                                   None)                    # _Out_opt_  LPDWORD lpBytesLeftThisMessage
             if not result:
                 last_error = GetLastError()
                 if last_error != PIPE_ENDED:
