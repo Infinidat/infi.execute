@@ -48,6 +48,15 @@ class Result(object):
             os.kill(self.get_pid(), sig)
             sleep(0)
 
+    @property
+    def _command_str(self):
+        if isinstance(self._command, str):
+            return self._command
+        elif isinstance(self._command, (list, tuple)):
+            return " ".join(self._command)
+        else:
+            return self._command
+
     def register_to_ioloop(self, ioloop):
         if self._popen.stdout is not None:
             self._register_stdout(ioloop)
@@ -82,7 +91,7 @@ class Result(object):
             self._popen.stdout.close()
             self._popen.stdout = None
         else:
-            logger.debug("[%s] %s", " ".join(self._command), _LazyDecode(output))
+            logger.debug("[%s] %s", self._command_str, _LazyDecode(output))
             self._output.write(output)
             self._register_stdout(ioloop)
 
@@ -104,7 +113,7 @@ class Result(object):
             self._popen.stderr.close()
             self._popen.stderr = None
         else:
-            logger.debug("[%s] %s", " ".join(self._command), _LazyDecode(output))
+            logger.debug("[%s] %s", self._command_str, _LazyDecode(output))
             self._error.write(output)
             self._register_stderr(ioloop)
 
