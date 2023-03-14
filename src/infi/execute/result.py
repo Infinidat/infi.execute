@@ -11,6 +11,17 @@ import signal
 
 from .ioloop import time, sleep
 
+import logging
+logger = logging.getLogger(__name__)
+
+
+class _LazyDecode:
+    def __init__(self, bytes_):
+        self.bytes_ = bytes_
+
+    def __str__(self):
+        return self.bytes_.decode("utf-8").strip("\n")
+
 
 MAX_INPUT_CHUNK_SIZE = 1024
 
@@ -36,6 +47,15 @@ class Result(object):
         if not self.is_finished():
             os.kill(self.get_pid(), sig)
             sleep(0)
+
+    @property
+    def _command_str(self):
+        if isinstance(self._command, str):
+            return self._command
+        elif isinstance(self._command, (list, tuple)):
+            return " ".join(self._command)
+        else:
+            return self._command
 
     def register_to_ioloop(self, ioloop):
         if self._popen.stdout is not None:
@@ -71,6 +91,7 @@ class Result(object):
             self._popen.stdout.close()
             self._popen.stdout = None
         else:
+            logger.debug("[%s] %s", self._command_str, _LazyDecode(output))
             self._output.write(output)
             self._register_stdout(ioloop)
 
@@ -92,6 +113,7 @@ class Result(object):
             self._popen.stderr.close()
             self._popen.stderr = None
         else:
+            logger.debug("[%s] %s", self._command_str, _LazyDecode(output))
             self._error.write(output)
             self._register_stderr(ioloop)
 
