@@ -46,9 +46,9 @@ class SimpleExecution(TestCase):
         newline = b"\r\n" if os.name == 'nt' else b"\n"
         self.assertEquals(result.get_stdout(), b"hello" + newline)
     def test__execute_with_env(self):
-        key = b"some_key"
-        value = b"some_value"
-        output = local.execute("set", shell=True, env={key:value}).get_stdout()
+        key = "some_key"
+        value = "some_value"
+        output = local.execute("set", shell=True, env={key:value}).get_stdout().decode()
         self.assertIn(key, output)
         self.assertIn(value, output)
     def test__sync_execute_stderr(self):
